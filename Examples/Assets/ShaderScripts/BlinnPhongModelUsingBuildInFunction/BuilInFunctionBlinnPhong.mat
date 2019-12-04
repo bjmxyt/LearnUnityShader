@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: SpecularFragment
-  m_Shader: {fileID: 4800000, guid: 2d9ca037f108f3f468feb93978bafcb3, type: 3}
+  m_Name: BuilInFunctionBlinnPhong
+  m_Shader: {fileID: 4800000, guid: 8a253ac6f57622c4a8974b8c114bba17, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -24,7 +24,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _Gloss: 140
+    - _Gloss: 256
     - _Glossiness: 0.5
     - _Metallic: 0
     m_Colors:
