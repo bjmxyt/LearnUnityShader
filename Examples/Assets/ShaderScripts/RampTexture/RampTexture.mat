@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: SingleTexture
-  m_Shader: {fileID: 4800000, guid: 4de1f6823b509d64fbf165e4b2046bd2, type: 3}
+  m_Name: RampTexture
+  m_Shader: {fileID: 4800000, guid: 2ad3ad283ff9c67438837be2ee8ad902, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -20,11 +20,15 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: a6e42589b1029ec4d962f422f92e554a, type: 3}
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _RampTex:
+        m_Texture: {fileID: 2800000, guid: 7384d094dddb3c1438789b4fe0b8ab8e, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _Gloss: 201
+    - _Gloss: 256
     - _Glossiness: 0.5
     - _Metallic: 0
     m_Colors:

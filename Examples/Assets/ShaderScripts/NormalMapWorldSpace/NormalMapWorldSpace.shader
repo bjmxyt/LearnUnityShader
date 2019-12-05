@@ -1,40 +1,41 @@
-﻿
-Shader"Custom/NormalMapTangentSpace"
+﻿// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+Shader"Custom/Normal Map World Space"
 {
 	Properties{
-		_Color("Color Tint", Color) = (1, 1, 1, 1)//物体颜色
-		_MainTex("Main Texture", 2D) = "white"{}//纹理贴图
-		_BumpMap("Normal Map", 2D) = "bump"{}//法线贴图
-		_BumpScale("Bump Scale", Range(0.0, 1)) = 1.0//凹凸程度
-		_Specular("Specular Color", Color) = (1, 1, 1, 1)//高光颜色
-		_Gloss("Gloss", Range(8.0, 256)) = 20
+		_Color("Tint Color", Color) = (1, 1, 1, 1)
+		_MainTex("Main Texture", 2D) = "white"{}
+		_BumpMap("Normal Map", 2D) = "bump"{}
+		_BumpMapScale("BumpMapScale", Range(0.0, 1)) = 1
+		_SpecularColor("Specular Color", Color) = (1, 1, 1, 1)
+		_Gloss("Gloss Scale", Range(1.0, 256)) = 20
 	}
-
 	SubShader{
 		Pass{
 			Tags {"LightMode" = "ForwardBase"}
 
 			CGPROGRAM
 
-			#pragma vertex vert
-			#pragma fragment frag
+			#pragma vertex Vert
+			#pragma fragment Frag
 
 			#include"Lighting.cginc"
 
 			fixed4 _Color;
 			sampler2D _MainTex;
-			float4 _MainTex_ST;//Main Texture Scale and Translation
+			float4 _MainTex_ST;
 			sampler2D _BumpMap;
 			float4 _BumpMap_ST;
-			float _BumpScale;
-			fixed4 _Specular;
+			float _BumpMapScale;
+			fixed3 _SpecularColor;
 			float _Gloss;
 
 			struct a2v{
 				float4 vertex: POSITION;
 				float3 normal: NORMAL;
 				float4 tangent: TANGENT;
-				float4 texcoord: TEXCOORD0;
+				float4 texcoord:TEXCOORD0;
 			};
 
 			struct v2f{
@@ -44,30 +45,27 @@ Shader"Custom/NormalMapTangentSpace"
 				float3 viewDir: TEXCOORD2;
 			};
 
-			v2f vert(a2v v){
+			v2f Vert(a2v v){
 				v2f o;
-
-				//将坐标从模型空间转换到齐次裁剪空间
+				//将模型坐标从模型空间转至齐次裁剪空间
 				o.pos = UnityObjectToClipPos(v.vertex);
-				
-				//纹理贴图和法线贴图的uv通道
+
+				//传递纹理贴图以及法线贴图的uv坐标
 				o.uv.xy = v.texcoord.xy * _MainTex_ST.xy + _MainTex_ST.zw;
 				o.uv.zw = v.texcoord.xy * _BumpMap_ST.xy + _BumpMap_ST.zw;
 
-				//在模型空间中计算副切线
-				float3 binormal = cross(normalize(v.normal), normalize(v.tangent.xyz)) * v.tangent.w;
-				//计算从模型空间转到切线空间的转换矩阵（目标空间坐标系的基按行排列）
-				float3x3 rotation = float3x3(v.tangent.xyz, binormal, v.normal);
+				float3 worldNormal = normalize(mul(unity_ObjectToWorld, v.normal));
+				float3 worldTangent = normalize(mul(unity_ObjectToWorld, v.tangent)).xyz;
+				float3 biNormal = cross(normalize(worldNormal), normalize(worldTangent)) * v.tangent.w;
 
-				//将光线方向和视线方向从模型空间转至切线空间
-				o.lightDir = mul(rotation, ObjSpaceLightDir(v.vertex)).xyz;
-				o.viewDir = mul(rotation, ObjSpaceViewDir(v.vertex)).xyz;
+				float3x3 rotation = float3x3(worldTangent, biNormal, worldNormal);
 
-				//返回
+				o.lightDir = mul(rotation, WorldSpaceLightDir(v.vertex));
+				o.viewDir = mul(rotation, WorldSpaceViewDir(v.vertex));
+
 				return o;
 			}
-
-			fixed4 frag(v2f i) : SV_Target{
+			fixed4 Frag(v2f i) : SV_Target{
 				
 				//单位化
 				fixed3 tangentLightDir = normalize(i.lightDir);
@@ -80,7 +78,7 @@ Shader"Custom/NormalMapTangentSpace"
 				//使用内置函数进行逆转换，像素颜色值和对应的法向量关系为: pixel = (normal + 1)/ 2;(pixel 和 normal均为vector3)
 				tangentNormal = UnpackNormal(packedNormal);
 				//乘以用以控制凹凸程度的BumpScale
-				tangentNormal.xy *= _BumpScale;
+				tangentNormal.xy *= _BumpMapScale;
 				//计算改变凹凸程度后的xy值对应下的z值（简单的勾股定理）
 				tangentNormal.z = sqrt(1.0 - saturate(dot(tangentNormal.xy, tangentNormal.xy)));
 
@@ -95,7 +93,7 @@ Shader"Custom/NormalMapTangentSpace"
 
 				//使用Blinn-Phong模型计算Specular（切线空间下）
 				fixed3 halfDir = normalize(tangentLightDir + tangentViewDir);
-				fixed3 specular = _LightColor0.rgb * _Specular.rgb * pow(max(0, dot(tangentNormal, halfDir)), _Gloss);
+				fixed3 specular = _LightColor0.rgb * _SpecularColor.rgb * pow(max(0, dot(tangentNormal, halfDir)), _Gloss);
 
 				//返回像素最终颜色
 				return fixed4(ambient + diffuse + specular, 1.0);
@@ -103,6 +101,6 @@ Shader"Custom/NormalMapTangentSpace"
 
 			ENDCG
 		}
-	}
 
+	}
 }
